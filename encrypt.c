@@ -30,10 +30,13 @@ char *validate_key(char *key) {
 	validkey[0] = '\0';
 	int keychars = 0;
 
+	// require the keyword to be part of the alphabet, upper or lower
+	char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\0";
+
 	for(int i = 0; key[i] != '\0'; i++) {
 		// is ch already in validkey?
 		// ** make sure strncat puts the \0 on the end
-		if (strchr(validkey, key[i])==NULL){
+		if ((strchr(validkey, key[i])==NULL)&&(strchr(alphabet, key[i])!=NULL)) {
 			strncat(validkey, &key[i], 1);
 			keychars++;
 		}
@@ -56,28 +59,75 @@ char *validate_key(char *key) {
 	return validkey;
 }
 
-char *encrypt_vigenere (char *buff, char *key) {
+
+int *encrypt_map (char *key) {
+
+	// Given the key, return an array of integers with the
+	// position of each letter for the transposition encryption
+	// example: key = BADFECIHJG ; order = 1 0 5 2 4 3 9 7 6 8
+	// this gives the
+
+
+	int keysize = strlen(key);
+
+	int *key_map;
+	key_map = (int *)malloc(sizeof(int) * keysize);
+
+	int map = 0;
+
+	printf("key is %s\n", key);
+
+	printf ("trans = ");
+
+	for (char alpha = 'A'; alpha <= 'Z'; alpha++) {
+
+		for (int key_i = 0; key_i < keysize; key_i++) {
+
+			if (key[key_i] == alpha) {
+				//printf("found %c at index %i\n", alpha, key_i);
+				//printf(" %i ", key_i);
+				key_map[map] = key_i;
+				map++;
+				break;
+
+			}
+
+		}
+
+	}
+	//printf ("\n");
+
+	for (int j = 0; j < keysize; j++) {
+		printf ("%i ", key_map[j]);
+	}
+	printf ("\n");
+
+	return (key_map);
+
+}
+
+
+char *encrypt_vigenere (char *buff, char *key, int bufferlength) {
 
 	char *encrypted;
+	int keysize = strlen(key);
 
-	size_t bufflength = strlen(buff);
-
-	encrypted =(char *)malloc(bufflength);
+	encrypted =(char *)malloc(sizeof(char) * bufferlength);
 
 	// Do a bitwise vigenere encryption with key
 	// key = 10 character array
 
-	printf ("bufflength: %li\n", bufflength );
+	printf ("bufflength: %i\n", bufferlength );
 
 	int i = 0;
 
-	while (i < bufflength) {
+	while (i < bufferlength) {
 
-		for (int j = 0; key[j] != '\0'; j++) {
+		for (int j = 0; j < keysize; j++) {
 
 			//printf ("encrypt %c with char = %c \n", buff[i], key[j]);
 
-			if (i == bufflength) {
+			if (i == bufferlength) {
 				break;
 			}
 
@@ -88,47 +138,43 @@ char *encrypt_vigenere (char *buff, char *key) {
 
 	}
 
-	encrypted[bufflength] = '\0';
-
 	return encrypted;
 
 }
 
 
-char *columnar_transposition (char *buff, char *key) {
+char *columnar_transposition (char *buff, char *key, int bufferlength) {
 
 	char *transposed;
 
-	int buffcharlen = strlen(buff);
+	int bitbufferlength = bufferlength * 8;
 
-	size_t bufflength = strlen(buff) * 8;
-
-	transposed =(char *)malloc(bufflength);
-	transposed[0] = '\0';
+	transposed =(char *)malloc(sizeof(char) * bufferlength);
 
 	// we know the key is 10 characters, divide
 	// the input into 10 columns, then concat the columns
 	// based upon the key
 
-	size_t keysize = strlen(key);
+	int keysize = strlen(key);
 
-	int colsize = bufflength / keysize;
-	int remainder = bufflength % keysize;
+	int colsize = bitbufferlength / keysize;
+	int remainder = bitbufferlength % keysize;
 
 	if (remainder != 0) {
 		printf("the remainder %d is NOT zero!\n", remainder);
 		colsize++;
 	}
 
-	printf ("bitlength: %li\n", bufflength );
-	printf ("keysize: %li\n", keysize);
+	printf ("bufferlength: %i\n", bufferlength);
+	printf ("bitlength: %i\n", bitbufferlength );
+	printf ("keysize: %i\n", keysize);
 	printf ("colsize: %i\n", colsize);
 	printf ("remainder: %i\n", remainder);
 
 	int *columns[keysize];
 
 	for (int k = 0; k < keysize; k++) {
-		columns[k] = (int *)malloc(colsize);
+		columns[k] = (int *)malloc(sizeof(int) * colsize);
 	}
 
 	int i = 0;
@@ -143,7 +189,7 @@ char *columnar_transposition (char *buff, char *key) {
 
 	// can't stop at '\0' because a binary file might not care about null bit = 0000 0000
 
-	while (i < buffcharlen) {
+	while (i < bufferlength) {
 
 		for (int bitpos = 7; bitpos >= 0; bitpos--) {
 
@@ -152,7 +198,7 @@ char *columnar_transposition (char *buff, char *key) {
 			int bit = ((buff[i] >> bitpos) & 1);
 
 			//printf ("bitpos %i - %i\n", bitpos, bit);
-			//printf ("put %i position col = %i, index = %i \n", bit, column, column_index);
+			//printf ("put %i pos col = %i, index = %i \n", bit, column, column_index);
 			printf ("%i ", bit);
 
 			columns[column][column_index] = bit;
@@ -173,57 +219,27 @@ char *columnar_transposition (char *buff, char *key) {
 	// now read off the bits according to the key order
 	// create a map - assume key is A-Z
 
-	int column_map[keysize];
-
-	int map = 0;
-
-	printf("\n");
-	printf("key is %s\n", key);
-
-	printf ("trans = ");
-
-	for (char alpha = 'A'; alpha <= 'Z'; alpha++) {
-
-		for (int key_i = 0; key_i < keysize; key_i++) {
-
-			if (key[key_i] == alpha) {
-				//printf("found %c at index %i\n", alpha, key_i);
-				printf(" %i ", key_i);
-				column_map[map] = key_i;
-				map++;
-				break;
-
-			}
-
-		}
-
-	}
-	printf ("\n");
-
-	/*
-	for (int i = 0; i < keysize; i++) {
-		printf(" %i ", column_map[i]);
-	}
-	printf ("\n");
-	*/
+	int *column_map = encrypt_map(key);
 
 	// now we just have to read each bit in the columns, according to the
 	// column map, and set each of the bits in an 8bit char
 
-	char ch = 0;
-	int location = 0;
-	int bitposition = 0;
-	int chlocation = 0;
+	char ch = '\0';			// the temporary character
+	int location = 0;   	// the location of the bit in the bit string
+	int bitposition = 0;	// the position of the bit in the pending character
+	int chlocation = 0;		// the location of the character in the transposed string
+	int map = 0;
 
 	for (int i = 0; i< keysize; i++) {
 
-		int map = column_map[i];
+		map = column_map[i];
 		//printf ("reading from column %i \n", map);
 
 		for (int j = 0; j < colsize; j++) {
 			bitposition = location % 8;
 
-			printf ("%i", columns[map][j]);
+			//printf ("%i, %i = %i\n", map, j, columns[map][j]);
+			printf ("%i ", columns[map][j]);
 
 			ch |= columns[map][j];
 
@@ -233,7 +249,6 @@ char *columnar_transposition (char *buff, char *key) {
 				printf ("\n");
 				transposed[chlocation] = ch;
 				chlocation++;
-				transposed[chlocation] = '\0';
 				ch = 0;
 			} else {
 				ch <<= 1;
@@ -359,21 +374,17 @@ int main (int argc, char **argv) {
 		printf ("Plaintext from file: |%s|\n", buffer);
 
 		// encrypt the buffer with key1
-		char *first_encryption = encrypt_vigenere(buffer, k1);
+		char *first_encryption = encrypt_vigenere(buffer, k1, fileLen);
 
 		free(buffer);
 
 		//printf ("first encryption = %s\n", first_encryption);
 
-		// read temp file, do columnar transposition with k1
-
 		// do columnar transposition with k1
-		char *first_transpo = columnar_transposition(first_encryption, k1);
+		char *first_transpo = columnar_transposition(first_encryption, k1, fileLen);
 		free(first_encryption);
 
-		return 0;
-
-		char *second_transpo = columnar_transposition(first_transpo, k2);
+		char *second_transpo = columnar_transposition(first_transpo, k2, fileLen);
 		free(first_transpo);
 
 		// write to output file
