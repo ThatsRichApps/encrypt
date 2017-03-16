@@ -2,7 +2,8 @@
  * encrypt.c
  *
  *  Created on: Mar 6, 2017
- *      Author: RJHumphrey
+ *      Author: Richard Humphrey
+ *
  */
 
 #include <stdio.h>
