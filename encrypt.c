@@ -4,9 +4,12 @@
  *  Created on: Mar 6, 2017
  *      Author: Richard Humphrey
  *
+<<<<<<< HEAD
  *  Last edited: 2017-03-17
  *
  *
+=======
+>>>>>>> master
  */
 
 #include <stdio.h>
