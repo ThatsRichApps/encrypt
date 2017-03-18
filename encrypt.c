@@ -38,7 +38,7 @@ char *validate_key(char *key) {
 	// in order to use the C str functions, it must have a null terminator
 	validkey[0] = '\0';
 
-	// require the keyword to be part of the uppercase alphabet
+	// require the keyword to be part of the uppercase alphabet (after to upper)
 	char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\0";
 
 	int unique_characters = 0;
@@ -102,11 +102,12 @@ int *encrypt_map (char *key) {
 	}
 	//printf ("\n");
 
+	/*
 	for (int j = 0; j < KEYWORDSIZE; j++) {
 		printf ("%i ", key_map[j]);
 	}
 	printf ("\n");
-
+	*/
 
 	return (key_map);
 
@@ -124,7 +125,6 @@ char *encrypt_vigenere (char *buff, char *key, int bufferlength) {
 
 	// Do a bitwise vigenere encryption with key
 	// key = KEYWORDSIZE character array
-	//printf ("bufflength: %i\n", bufferlength );
 
 	int char_location = 0;
 
@@ -138,6 +138,7 @@ char *encrypt_vigenere (char *buff, char *key, int bufferlength) {
 				break;
 			}
 
+			// xor with the appropriate key letter
 			encrypted[char_location] = buff[char_location] ^ key[j];
 
 			char_location++;
@@ -172,11 +173,11 @@ char *columnar_transposition (char *buff, char *key, int bufferlength) {
 		colsize++;
 	}
 
-	printf ("bufferlength: %i\n", bufferlength);
-	printf ("bitlength: %i\n", bitbufferlength );
-	printf ("KEYWORDSIZE: %i\n", KEYWORDSIZE);
-	printf ("colsize: %i\n", colsize);
-	printf ("remainder: %i\n", remainder);
+	//printf ("bufferlength: %i\n", bufferlength);
+	//printf ("bitlength: %i\n", bitbufferlength );
+	//printf ("KEYWORDSIZE: %i\n", KEYWORDSIZE);
+	//printf ("colsize: %i\n", colsize);
+	//printf ("remainder: %i\n", remainder);
 
 	int *columns[KEYWORDSIZE];
 
@@ -206,13 +207,13 @@ char *columnar_transposition (char *buff, char *key, int bufferlength) {
 
 			//printf ("bitpos %i - %i\n", bitpos, bit);
 			//printf ("put %i pos col = %i, index = %i \n", bit, column, column_index);
-			printf ("%i ", bit);
+			//printf ("%i ", bit);
 
 			columns[column][column_index] = bit;
 
 			if (column == (KEYWORDSIZE - 1)) {
 				column_index++;
-				printf("\n");
+				//printf("\n");
 			}
 
 			bitlocation++;
@@ -223,7 +224,7 @@ char *columnar_transposition (char *buff, char *key, int bufferlength) {
 
 	}
 
-	printf ("\n\n");
+	//printf ("\n");
 
 	// now read off the bits according to the key order
 	// create a map - assume key is A-Z
@@ -255,14 +256,14 @@ char *columnar_transposition (char *buff, char *key, int bufferlength) {
 			bitposition = location % 8;
 
 			//printf ("%i, %i = %i\n", map, j, columns[map][j]);
-			printf ("%i ", columns[map][j]);
+			//printf ("%i ", columns[map][j]);
 
 			ch |= columns[map][j];
 
 			if (bitposition == 7) {
 				//printf (" - ");
 				//printf ("appending %c to transposed: in position %i %s\n", ch, chlocation, transposed);
-				printf ("\n");
+				//printf ("\n");
 				transposed[chlocation] = ch;
 				chlocation++;
 				ch = 0;
@@ -273,7 +274,7 @@ char *columnar_transposition (char *buff, char *key, int bufferlength) {
 		}
 
 	}
-	printf("\n");
+	//printf("\n");
 
 	return transposed;
 
@@ -286,6 +287,7 @@ int main (int argc, char **argv) {
 	char *key1;
 	char *key2;
 	int c;
+	int verbose = 0;
 
 	if (argc == 1) {
 			printf("Error: Provide binary filename and keys.\n");
@@ -293,12 +295,15 @@ int main (int argc, char **argv) {
 			exit(0);
 		}
 
-		while ((c = getopt (argc, argv, "h")) != -1) {
+		while ((c = getopt (argc, argv, "hv")) != -1) {
 			// Option argument
 			switch (c) {
 			case 'h':
 				print_help();
 				exit(1);
+			case 'v':
+				verbose = 1;
+				break;
 			default:
 				break;
 			}
@@ -334,7 +339,7 @@ int main (int argc, char **argv) {
 			exit(0);
 		}
 
-		printf ("file: %s\n", plaintext_file);
+		//printf ("file: %s\n", plaintext_file);
 		//printf ("key1: %s\n", key1);
 		//printf ("key2: %s\n", key2);
 
@@ -354,8 +359,8 @@ int main (int argc, char **argv) {
 			exit(0);
 		}
 
-		printf ("k1 = %s\n", k1);
-		printf ("k2 = %s\n", k2);
+		//printf ("k1 = %s\n", k1);
+		//printf ("k2 = %s\n", k2);
 
 		// Read from the binary file into a buffer
 		char *buffer;
@@ -364,7 +369,7 @@ int main (int argc, char **argv) {
 		//Open the file
 		FILE *fp = fopen(plaintext_file,"rb");
 		if(!fp) {
-			printf ("Unable to read file");
+			printf ("Unable to open binary file\n");
 			return 0;
 		}
 
@@ -376,7 +381,7 @@ int main (int argc, char **argv) {
 		//Allocate memory
 		buffer=(char *)malloc(fileLen+1);
 		if (!buffer) {
-			printf("Memory error!");
+			printf("Memory error, unable to allocate buffer\n");
 	        fclose(fp);
 			return 0;
 		}
@@ -387,23 +392,25 @@ int main (int argc, char **argv) {
 
 		buffer[fileLen] = '\0';
 
-		printf ("Plaintext from file: |%s|\n", buffer);
+		//printf ("Plaintext from file: |%s|\n", buffer);
 
 		// encrypt the buffer with key1
+		if (verbose) { printf ("Performing Vigenere encryption on key %s\n", k1); }
 		char *first_encryption = encrypt_vigenere(buffer, k1, fileLen);
-
 		free(buffer);
 
 		// do columnar transposition with k1
+		if (verbose) { printf ("Performing first transposition on key %s\n", k1); }
 		char *first_transpo = columnar_transposition(first_encryption, k1, fileLen);
-
 		free(first_encryption);
 
+		if (verbose) { printf ("Performing second transposition on key %s\n", k2); }
 		char *second_transpo = columnar_transposition(first_transpo, k2, fileLen);
 		free(first_transpo);
 
 		// write to output file
-		char *output_filename = "encrypted";
+		char *output_filename = "Richard-Humphrey-encrypted-str";
+		if (verbose) { printf ("Writing encryption to file %s\n", output_filename); }
 		FILE *wp;
 		wp = fopen(output_filename,"wb");
 		fwrite(second_transpo,fileLen,1,wp);
