@@ -339,7 +339,7 @@ int main (int argc, char **argv) {
 			exit(0);
 		}
 
-		//printf ("file: %s\n", plaintext_file);
+		if (verbose) { printf ("Opening file: %s\n", plaintext_file); }
 		//printf ("key1: %s\n", key1);
 		//printf ("key2: %s\n", key2);
 
@@ -415,6 +415,8 @@ int main (int argc, char **argv) {
 		wp = fopen(output_filename,"wb");
 		fwrite(second_transpo,fileLen,1,wp);
 		fclose(wp);
+
+		printf("Encryption complete\n");
 
 }
 
